@@ -3,7 +3,7 @@ import CircularLoading from "@/components/common/circular-loading/CircularLoadin
 import ToolTip from "@/components/common/ToolTip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn, debounce } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
 import {
   addNewMessage,
@@ -14,19 +14,16 @@ import {
 } from "@/redux/features/messages/messagesSlice";
 import { selectSelectedUser } from "@/redux/features/user/usersSlice";
 import { Bell, Ellipsis, Paperclip, Search, SendHorizonal } from "lucide-react";
-import { KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 
 const Messages = ({ loading }: { loading: boolean }) => {
   const dispatch = useAppDispatch();
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastMessageRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const metadata = useAppSelector(selectMetaData);
   const messages = useAppSelector(selectMessages);
   const selectedUser = useAppSelector(selectSelectedUser);
-  const currentPage = metadata?.pagination?.page ?? 1;
-  const hasMore = !!metadata?.data?.pagination?.link?.nextCursor;
+  const currentPage = metadata?.pagination?.page;
   const [fetchingMoreMessages, setFetchingMoreMessages] = useState(false);
   const [prevScrollHeight, setPrevAScrollHeight] = useState(0);
 
@@ -78,54 +75,29 @@ const Messages = ({ loading }: { loading: boolean }) => {
 
   useEffect(() => {
     const messagesContainer = messagesContainerRef?.current;
-    const lastMessageElement = lastMessageRef?.current;
-    if (!messagesContainer || !lastMessageElement) return;
+    if (!messagesContainer) return;
     setPrevAScrollHeight(messagesContainer?.scrollHeight);
 
+    if (fetchingMoreMessages) return;
     const handleScrollTop = () => {
-      if (fetchingMoreMessages) return;
-      // const { clientHeight, scrollHeight, scrollTop } = messagesContainer;
-      const containerRect = messagesContainer?.getBoundingClientRect();
-      const elementRect = lastMessageElement?.getBoundingClientRect();
-
-      if (
-        elementRect?.top >= containerRect?.top &&
-        elementRect?.bottom <= containerRect?.bottom
-      ) {
-        console.log("I am in view");
+      const { clientHeight, scrollHeight, scrollTop } = messagesContainer;
+      const diff = clientHeight - scrollHeight;
+      if (scrollTop - diff <= 0) {
+        fetchMoreMessages();
       }
     };
 
-    messagesContainer?.addEventListener("scroll", handleScrollTop);
+    const debouncedHandleScrollTop = debounce(handleScrollTop, 200);
+
+    messagesContainer?.addEventListener("scroll", debouncedHandleScrollTop);
 
     return () => {
-      messagesContainer?.removeEventListener("scroll", handleScrollTop);
+      messagesContainer?.removeEventListener(
+        "scroll",
+        debouncedHandleScrollTop
+      );
     };
-  }, [dispatch, messagesContainerRef?.current]);
-
-  // const lastMessageRef = useCallback(
-  //   (node: Element | null) => {
-  //     console.log("I am here 104", observer.current);
-  //     if (fetchingMoreMessages || !hasMore) return;
-  //     if (observer.current) observer.current.disconnect();
-  //     observer.current = new IntersectionObserver(
-  //       (entries) => {
-  //         console.log("interacting", entries[0].isIntersecting);
-  //         console.log("has more", hasMore);
-  //         if (entries[0].isIntersecting && hasMore) {
-  //           fetchMoreMessages();
-  //         }
-  //       },
-  //       {
-  //         root: null,
-  //         threshold: 1.0,
-  //         rootMargin: "0px",
-  //       }
-  //     );
-  //     if (node) observer.current.observe(node);
-  //   },
-  //   [fetchingMoreMessages, hasMore]
-  // );
+  }, [messagesContainerRef?.current]);
 
   return (
     <div className="w-full flex flex-col divide-y relative">
@@ -169,9 +141,6 @@ const Messages = ({ loading }: { loading: boolean }) => {
             >
               {sortedMessages?.map((message, idx) => (
                 <div
-                  ref={
-                    idx === sortedMessages?.length - 1 ? lastMessageRef : null
-                  }
                   key={message?.id}
                   className={cn(
                     "border py-2 px-4 bg-gray-200 w-max rounded-md",
@@ -183,10 +152,7 @@ const Messages = ({ loading }: { loading: boolean }) => {
               ))}
 
               {fetchingMoreMessages && (
-                <div
-                  ref={lastMessageRef}
-                  className="w-full p-1 border flex justify-center"
-                >
+                <div className="w-full p-1 border flex justify-center">
                   <CircularLoading size="2.5rem" thickness={3} />
                 </div>
               )}
