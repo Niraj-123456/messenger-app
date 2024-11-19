@@ -1,4 +1,3 @@
-import { fetchMessages } from "@/api/messages";
 import CircularLoading from "@/components/common/circular-loading/CircularLoading";
 import ToolTip from "@/components/common/ToolTip";
 import { Button } from "@/components/ui/button";
@@ -7,10 +6,10 @@ import { cn, debounce } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
 import {
   addNewMessage,
+  fetchPaginatedMessages,
+  selectLoading,
   selectMessages,
   selectMetaData,
-  storeMetaData,
-  storeMoreMessages,
 } from "@/redux/features/messages/messagesSlice";
 import { selectSelectedUser } from "@/redux/features/user/usersSlice";
 import { Bell, Ellipsis, Paperclip, Search, SendHorizonal } from "lucide-react";
@@ -20,11 +19,11 @@ const Messages = ({ loading }: { loading: boolean }) => {
   const dispatch = useAppDispatch();
   const messageInputRef = useRef<HTMLInputElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const metadata = useAppSelector(selectMetaData);
   const messages = useAppSelector(selectMessages);
+  const metadata = useAppSelector(selectMetaData);
   const selectedUser = useAppSelector(selectSelectedUser);
-  const currentPage = metadata?.pagination?.page;
-  const [fetchingMoreMessages, setFetchingMoreMessages] = useState(false);
+  const fetchingMoreMessages = useAppSelector(selectLoading);
+  const currentPage = metadata?.pagination?.page ?? 1;
   const [prevScrollHeight, setPrevAScrollHeight] = useState(0);
 
   const sortedMessages = [...messages].sort((a, b) => a?.id - b?.id);
@@ -60,19 +59,6 @@ const Messages = ({ loading }: { loading: boolean }) => {
     });
   }, [messages]);
 
-  const fetchMoreMessages = async () => {
-    setFetchingMoreMessages(true);
-    try {
-      const res = await fetchMessages(currentPage + 1);
-      dispatch(storeMoreMessages(res?.data?.data));
-      dispatch(storeMetaData(res?.data?.meta));
-    } catch (ex) {
-      // handle error
-    } finally {
-      setFetchingMoreMessages(false);
-    }
-  };
-
   useEffect(() => {
     const messagesContainer = messagesContainerRef?.current;
     if (!messagesContainer) return;
@@ -83,7 +69,7 @@ const Messages = ({ loading }: { loading: boolean }) => {
       const { clientHeight, scrollHeight, scrollTop } = messagesContainer;
       const diff = clientHeight - scrollHeight;
       if (scrollTop - diff <= 0) {
-        fetchMoreMessages();
+        dispatch(fetchPaginatedMessages(currentPage));
       }
     };
 
@@ -97,7 +83,7 @@ const Messages = ({ loading }: { loading: boolean }) => {
         debouncedHandleScrollTop
       );
     };
-  }, [messagesContainerRef?.current]);
+  }, [messagesContainerRef?.current, dispatch, currentPage]);
 
   return (
     <div className="w-full flex flex-col divide-y relative">

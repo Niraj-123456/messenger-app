@@ -19,7 +19,7 @@ const MessengerContainer = () => {
 
   const getUsers = async () => {
     try {
-      const res = await fetchUserList();
+      const res = await fetchUserList(1);
       dispatch(userList(res?.data?.data));
       dispatch(storeSelectedUser(res?.data?.data[0]));
       dispatch(storeMessages(res?.data?.data));

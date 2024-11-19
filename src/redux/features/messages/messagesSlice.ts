@@ -18,7 +18,7 @@ const initialState: MessagesSlice = {
 export const fetchPaginatedMessages = createAsyncThunk(
   `/users/fetchUserList`,
   async (pageNumber: number) => {
-    const response = await fetchUserList(pageNumber);
+    const response = await fetchUserList(pageNumber + 1);
     return response.data;
   }
 );
@@ -44,11 +44,11 @@ export const messagesSlice = createSlice({
     builder.addCase(fetchPaginatedMessages.pending, (state) => {
       state.loadingPrevMessages = true;
     });
-    // builder.addCase(fetchPaginatedMessages.fulfilled, (state, action) => {
-    //   state.loadingPrevMessages = false;
-    //   state.messages.push(...action.payload?.data);
-    //   state.metadata = action.payload?.meta;
-    // });
+    builder.addCase(fetchPaginatedMessages.fulfilled, (state, action) => {
+      state.loadingPrevMessages = false;
+      state.messages.push(...action.payload?.data);
+      state.metadata = action.payload?.meta;
+    });
   },
 });
 
