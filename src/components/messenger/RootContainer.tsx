@@ -32,7 +32,7 @@ const MessengerContainer = () => {
   };
 
   return (
-    <div className="w-full max-h-[calc(100vh-300px)] h-full flex divide-x max-w-7xl mx-auto border">
+    <div className="w-full max-h-[calc(100vh-400px)] h-full flex divide-x max-w-7xl mx-auto border">
       <UserList loading={loading} />
       <Messages loading={loading} />
     </div>
