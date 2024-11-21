@@ -13,7 +13,7 @@ import {
 } from "@/redux/features/messages/messagesSlice";
 import { selectSelectedUser } from "@/redux/features/user/usersSlice";
 import { Bell, Ellipsis, Paperclip, Search, SendHorizonal } from "lucide-react";
-import { KeyboardEvent, useEffect, useRef, useState } from "react";
+import { KeyboardEvent, useEffect, useRef } from "react";
 
 const Messages = ({ loading }: { loading: boolean }) => {
   const dispatch = useAppDispatch();
@@ -24,7 +24,6 @@ const Messages = ({ loading }: { loading: boolean }) => {
   const selectedUser = useAppSelector(selectSelectedUser);
   const fetchingMoreMessages = useAppSelector(selectLoading);
   const currentPage = metadata?.pagination?.page ?? 1;
-  const [prevScrollHeight, setPrevAScrollHeight] = useState(0);
 
   const sortedMessages = [...messages].sort((a, b) => a?.id - b?.id);
 
@@ -50,40 +49,42 @@ const Messages = ({ loading }: { loading: boolean }) => {
   };
 
   useEffect(() => {
-    const messagesContainer = messagesContainerRef?.current;
-    if (!messagesContainer) return;
+    const latestMessageInTheBatch = document.querySelector(
+      "#latestMessageInTheBatch"
+    );
 
-    messagesContainer.scrollTo({
+    if (!latestMessageInTheBatch) return;
+
+    latestMessageInTheBatch.scrollIntoView({
       behavior: "smooth",
-      top: prevScrollHeight,
+      block: "center",
     });
-  }, [messages]);
+  }, [sortedMessages]);
 
   useEffect(() => {
     const messagesContainer = messagesContainerRef?.current;
     if (!messagesContainer) return;
-    setPrevAScrollHeight(messagesContainer?.scrollHeight);
 
     if (fetchingMoreMessages) return;
     const handleScrollTop = () => {
       const { clientHeight, scrollHeight, scrollTop } = messagesContainer;
       const diff = clientHeight - scrollHeight;
-      if (scrollTop - diff <= 0) {
+      if (scrollTop - diff === 0) {
         dispatch(fetchPaginatedMessages(currentPage));
       }
     };
 
-    const debouncedHandleScrollTop = debounce(handleScrollTop, 200);
-
-    messagesContainer?.addEventListener("scroll", debouncedHandleScrollTop);
+    messagesContainer?.addEventListener("scroll", handleScrollTop);
 
     return () => {
-      messagesContainer?.removeEventListener(
-        "scroll",
-        debouncedHandleScrollTop
-      );
+      messagesContainer?.removeEventListener("scroll", handleScrollTop);
     };
-  }, [messagesContainerRef?.current, dispatch, currentPage]);
+  }, [
+    messagesContainerRef?.current,
+    dispatch,
+    currentPage,
+    fetchingMoreMessages,
+  ]);
 
   return (
     <div className="w-full flex flex-col divide-y relative">
@@ -125,20 +126,29 @@ const Messages = ({ loading }: { loading: boolean }) => {
               )}
               ref={messagesContainerRef}
             >
-              {sortedMessages?.map((message, idx) => (
-                <div
-                  key={message?.id}
-                  className={cn(
-                    "border py-2 px-4 bg-gray-200 w-max rounded-md",
-                    idx % 2 === 0 ? "bg-gray-50" : "bg-gray-200 self-end"
-                  )}
-                >
-                  {message?.name}
-                </div>
-              ))}
+              {sortedMessages?.map((message, idx) => {
+                const isLatestMessageInTheBlock =
+                  sortedMessages?.length - 10 === idx;
+                return (
+                  <div
+                    id={`${
+                      isLatestMessageInTheBlock
+                        ? "latestMessageInTheBatch"
+                        : "message"
+                    }`}
+                    key={message?.id}
+                    className={cn(
+                      "border py-2 px-4 bg-gray-200 w-max rounded-md",
+                      idx % 2 === 0 ? "bg-gray-50" : "bg-gray-200 self-end"
+                    )}
+                  >
+                    {message?.name}
+                  </div>
+                );
+              })}
 
               {fetchingMoreMessages && (
-                <div className="w-full p-1 border flex justify-center">
+                <div className="w-full p-1 flex justify-center">
                   <CircularLoading size="2.5rem" thickness={3} />
                 </div>
               )}

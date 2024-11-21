@@ -25,7 +25,7 @@ const MessengerContainer = () => {
       dispatch(storeMessages(res?.data?.data));
       dispatch(storeMetaData(res?.data?.meta));
     } catch (ex) {
-      console.log("error", ex);
+      // console.log("error", ex);
     } finally {
       setLoading(false);
     }
