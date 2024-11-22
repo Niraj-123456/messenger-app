@@ -1,14 +1,14 @@
 import { KeyboardEvent, useRef } from "react";
 import ToolTip from "@/components/common/ToolTip";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Camera, Image, Mic, SendHorizonal } from "lucide-react";
 import { useAppDispatch } from "@/redux/app/hooks";
 import { addNewMessage } from "@/redux/features/messages/messagesSlice";
+import { Textarea } from "@/components/ui/textarea";
 
 const SendMessageContainer = () => {
   const dispatch = useAppDispatch();
-  const messageInputRef = useRef<HTMLInputElement | null>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const handleSendMessage = () => {
     if (!messageInputRef?.current) return;
@@ -27,11 +27,15 @@ const SendMessageContainer = () => {
     messageInputRef.current.value = "";
   };
 
-  const handleEnterKeyPressed = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSendMessage();
+  const handleEnterKeyPressed = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      if (e.shiftKey) return;
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
   return (
-    <div className="relative flex items-center px-4 py-2 border">
+    <div className="flex gap-2 items-center px-4 py-2 border-t">
       <div className="flex gap-2 items-center">
         <ToolTip title="Choose Image">
           <Image className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-800" />
@@ -43,13 +47,15 @@ const SendMessageContainer = () => {
           <Mic className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-800" />
         </ToolTip>
       </div>
-      <Input
+      <Textarea
+        rows={1}
         ref={messageInputRef}
         placeholder="Type here..."
-        className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+        className="resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[40px] py-2 pl-0 custom_scroll"
         onKeyDown={handleEnterKeyPressed}
       />
-      <Button className="absolute top-2 right-2" onClick={handleSendMessage}>
+
+      <Button onClick={handleSendMessage}>
         Send
         <SendHorizonal className="ml-2" />
       </Button>

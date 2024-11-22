@@ -3,13 +3,13 @@ import Messages from "./messages/Messages";
 import UserList from "./userlist/UserList";
 import { useEffect, useState } from "react";
 import { fetchUserList } from "@/api/users";
-import { storeSelectedUser, userList } from "@/redux/features/user/usersSlice";
+import { storeSelectedUser, userList } from "@/redux/features/users/usersSlice";
 import {
   storeMessages,
   storeMetaData,
 } from "@/redux/features/messages/messagesSlice";
 
-const MessengerContainer = () => {
+const MessagesMainContainer = () => {
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(true);
 
@@ -32,11 +32,11 @@ const MessengerContainer = () => {
   };
 
   return (
-    <div className="w-full max-h-[calc(100vh-400px)] h-full flex divide-x max-w-7xl mx-auto border">
+    <div className="w-full h-full flex divide-x">
       <UserList loading={loading} />
       <Messages loading={loading} />
     </div>
   );
 };
 
-export default MessengerContainer;
+export default MessagesMainContainer;

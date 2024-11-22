@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
 import {
   selectSelectedUser,
   storeSelectedUser,
-} from "@/redux/features/user/usersSlice";
+} from "@/redux/features/users/usersSlice";
 
 const FriendList = ({ friend }: { friend: any }) => {
   const dispatch = useAppDispatch();

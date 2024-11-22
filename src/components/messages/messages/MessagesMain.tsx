@@ -1,4 +1,5 @@
 import CircularLoading from "@/components/common/circular-loading/CircularLoading";
+import CustomAvatar from "@/components/common/CustomAvatar";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
 import {
@@ -26,9 +27,9 @@ const MessagesMain = () => {
 
     if (fetchingMoreMessages) return;
     const handleScrollTop = () => {
-      const { clientHeight, scrollHeight, scrollTop } = messagesContainer;
-      const diff = clientHeight - scrollHeight;
-      if (scrollTop - diff === 0) {
+      const { scrollTop } = messagesContainer;
+
+      if (scrollTop <= 0) {
         dispatch(fetchPaginatedMessages(currentPage));
       }
     };
@@ -59,35 +60,56 @@ const MessagesMain = () => {
 
   return (
     <div
-      className={cn(
-        "w-full flex flex-col-reverse gap-4 overflow-auto",
-        "custom_scroll"
-      )}
       ref={messagesContainerRef}
+      className="w-full h-[calc(100vh-537px)] max-h-[calc(100vh-537px)] overflow-auto custom_scroll"
     >
-      {sortedMessages?.map((message, idx) => {
-        const isLatestMessageInTheBlock = sortedMessages?.length - 10 === idx;
-        return (
-          <div
-            id={`${
-              isLatestMessageInTheBlock ? "latestMessageInTheBatch" : "message"
-            }`}
-            key={message?.id}
-            className={cn(
-              "border py-2 px-4 bg-gray-200 w-max rounded-full",
-              idx % 2 === 0 ? "bg-gray-50" : "bg-gray-200 self-end"
-            )}
-          >
-            {message?.name}
-          </div>
-        );
-      })}
+      <div
+        className={cn(
+          "w-full flex flex-col-reverse gap-4 px-6 py-4",
+          "custom_scroll"
+        )}
+      >
+        {sortedMessages?.map((message, idx) => {
+          const isLatestMessageInTheBlock = sortedMessages?.length - 10 === idx;
+          return (
+            <div
+              id={`${
+                isLatestMessageInTheBlock
+                  ? "latestMessageInTheBatch"
+                  : "message"
+              }`}
+              key={message?.id}
+              className={cn(
+                "flex gap-2 items-start w-full",
+                idx % 2 === 0 ? "justify-start" : "justify-end"
+              )}
+            >
+              <CustomAvatar
+                src=""
+                name={message?.name}
+                className={cn(
+                  idx % 2 === 0 ? "" : "order-last",
+                  "w-[1.85rem] h-[1.85rem]"
+                )}
+              />
+              <div
+                className={cn(
+                  "border py-1 px-3 bg-gray-200 w-max rounded-2xl max-w-80 text-sm",
+                  idx % 2 === 0 ? "bg-gray-50" : "bg-gray-200"
+                )}
+              >
+                {message?.name}
+              </div>
+            </div>
+          );
+        })}
 
-      {fetchingMoreMessages && (
-        <div className="w-full p-1 flex justify-center">
-          <CircularLoading size="2.5rem" thickness={3} />
-        </div>
-      )}
+        {fetchingMoreMessages && (
+          <div className="w-full p-1 flex justify-center">
+            <CircularLoading size="2.5rem" thickness={3} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,13 +1,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { stringToColor } from "@/lib/stringHelper";
 import { useAppSelector } from "@/redux/app/hooks";
-import { selectSelectedUser } from "@/redux/features/user/usersSlice";
+import { selectSelectedUser } from "@/redux/features/users/usersSlice";
 import { Info, Phone, Video } from "lucide-react";
 
 const SenderInfo = () => {
   const senderInfo = useAppSelector(selectSelectedUser);
   return (
-    <div className="w-full flex gap-4 items-center">
+    <div className="w-full flex gap-4 items-center px-4 py-3">
       <div className="relative w-full">
         <div className="flex gap-2 items-center">
           <Avatar className="w-14 h-14">

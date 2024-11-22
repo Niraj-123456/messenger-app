@@ -13,7 +13,7 @@ const Messages = ({ loading }: { loading: boolean }) => {
   }
 
   return (
-    <div className="w-full flex flex-col divide-y [&>:not(:last-child)]:px-8 [&>:not(:last-child)]:py-4">
+    <div className="w-full h-full flex flex-col divide-y">
       <SenderInfo />
       <MessagesMain />
       <SendMessageContainer />

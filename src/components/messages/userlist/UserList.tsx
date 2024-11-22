@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { useAppSelector } from "@/redux/app/hooks";
 import { stringToColor } from "@/lib/stringHelper";
 import { cn } from "@/lib/utils";
-import { selectUsers } from "@/redux/features/user/usersSlice";
+import { selectUsers } from "@/redux/features/users/usersSlice";
 import { Skeleton } from "@/components/ui/skeleton";
 import FriendList from "./FriendList";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
