@@ -1,21 +1,38 @@
-import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
-import UserImage from "../../../assets/images/random.jpg";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
-import { useAppSelector } from "@/redux/app/hooks";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import UserImage from "../../assets/images/random.jpg";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
 import { stringToColor } from "@/lib/stringHelper";
 import { cn } from "@/lib/utils";
 import { selectUsers } from "@/redux/features/users/usersSlice";
 import { Skeleton } from "@/components/ui/skeleton";
 import FriendList from "./FriendList";
-import { MoreHorizontal, Plus, Search } from "lucide-react";
+import { LogOut, MoreHorizontal, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { logOut } from "@/redux/features/user/userSlice";
 
 const UserList = ({ loading }: { loading: boolean }) => {
+  const dispatch = useAppDispatch();
   const users = useAppSelector(selectUsers);
 
+  const handleSignout = async () => {
+    try {
+      await signOut(auth);
+      dispatch(logOut());
+    } catch (ex) {}
+  };
+
   return (
-    <div className="w-full flex flex-col divide-y-2 max-w-md *:p-4">
+    <div className="w-full flex flex-col divide-y-2 max-w-sm *:p-4">
       <div className="flex flex-col gap-8">
         <div className="flex justify-between">
           <div className="flex gap-2 items-center">
@@ -29,7 +46,19 @@ const UserList = ({ loading }: { loading: boolean }) => {
             </div>
           </div>
 
-          <MoreHorizontal className="cursor-pointer hover:text-gray-400" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <MoreHorizontal className="cursor-pointer hover:text-gray-400" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={handleSignout}
+              >
+                Logout <LogOut className="ml-auto" />
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="flex gap-2 ">
@@ -52,7 +81,7 @@ const UserList = ({ loading }: { loading: boolean }) => {
         <h4 className="font-semibold">Friends</h4>
         <div
           className={cn(
-            "w-full h-max flex gap-4 mt-2 pb-2 overflow-y-auto",
+            "w-full flex gap-4 mt-2 pb-2 overflow-y-auto",
             "custom_scroll"
           )}
         >
@@ -98,7 +127,7 @@ const UserList = ({ loading }: { loading: boolean }) => {
             <TabsContent value="All">
               <div
                 className={cn(
-                  "flex flex-col divide-y overflow-auto max-h-72 *:p-4",
+                  "flex flex-col divide-y overflow-auto max-h-[calc(100vh-26.8rem)] *:p-4",
                   "custom_scroll"
                 )}
               >

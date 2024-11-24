@@ -10,7 +10,7 @@ import {
 } from "@/redux/features/messages/messagesSlice";
 import { useEffect, useRef } from "react";
 
-const MessagesMain = () => {
+const ChatMessages = () => {
   const dispatch = useAppDispatch();
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -61,11 +61,11 @@ const MessagesMain = () => {
   return (
     <div
       ref={messagesContainerRef}
-      className="w-full h-[calc(100vh-537px)] max-h-[calc(100vh-537px)] overflow-auto custom_scroll"
+      className="w-full overflow-auto custom_scroll"
     >
       <div
         className={cn(
-          "w-full flex flex-col-reverse gap-4 px-6 py-4",
+          "w-full h-[calc(100vh-140px)] max-h-[calc(100vh-140px)] flex flex-col-reverse justify-end gap-4 px-6 py-4",
           "custom_scroll"
         )}
       >
@@ -114,4 +114,4 @@ const MessagesMain = () => {
   );
 };
 
-export default MessagesMain;
+export default ChatMessages;

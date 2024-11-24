@@ -1,5 +1,5 @@
 import { useAppDispatch } from "@/redux/app/hooks";
-import Messages from "./messages/Messages";
+import Messages from "./chat/ChatRoom";
 import UserList from "./userlist/UserList";
 import { useEffect, useState } from "react";
 import { fetchUserList } from "@/api/users";
@@ -8,8 +8,9 @@ import {
   storeMessages,
   storeMetaData,
 } from "@/redux/features/messages/messagesSlice";
+import SelectedFriendInfo from "./selected-friend-info/SelectedFriendInfo";
 
-const MessagesMainContainer = () => {
+const ChatRoomContainer = () => {
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(true);
 
@@ -35,8 +36,9 @@ const MessagesMainContainer = () => {
     <div className="w-full h-full flex divide-x">
       <UserList loading={loading} />
       <Messages loading={loading} />
+      <SelectedFriendInfo />
     </div>
   );
 };
 
-export default MessagesMainContainer;
+export default ChatRoomContainer;

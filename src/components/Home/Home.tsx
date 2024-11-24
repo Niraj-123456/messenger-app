@@ -1,28 +1,49 @@
 import Login from "../login/Login";
-import MessagesMainContainer from "../messages/MessagesMainContainer";
+import ChatRoomContainer from "../ChatRoomContainer";
 import { useEffect, useState } from "react";
-import { getLoggedInUser } from "@/lib/auth";
-import { useAppSelector } from "@/redux/app/hooks";
-import { selectUser } from "@/redux/features/user/userSlice";
+import { useAppDispatch } from "@/redux/app/hooks";
+import { logIn, logOut } from "@/redux/features/user/userSlice";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import CircularLoading from "../common/circular-loading/CircularLoading";
 
 const Home = () => {
-  const [loggedInUser, setLoggedInUser] = useState(null);
-  const userFromStore = useAppSelector(selectUser);
+  const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(true);
+  const [loggedInUser, setLoggedInUser] = useState<any | null>(null);
 
   useEffect(() => {
-    const user = getLoggedInUser();
-    if (user?.displayName || userFromStore) {
-      setLoggedInUser(user);
-    } else {
-      setLoggedInUser(null);
-    }
-  }, [userFromStore]);
-
-  console.log("logged in user", loggedInUser);
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userObj = {
+          displayName: user?.displayName,
+          email: user?.email,
+          photoUrl: user?.photoURL,
+          accessToken: await user?.getIdToken(),
+          refreshToken: user?.refreshToken,
+        };
+        setLoading(false);
+        setLoggedInUser(userObj);
+        dispatch(logIn(userObj));
+      } else {
+        setLoading(false);
+        setLoggedInUser(null);
+        dispatch(logOut());
+      }
+    });
+  }, []);
 
   return (
-    <div className="w-full max-h-[calc(100vh-400px)] h-[calc(100vh-400px)] max-w-7xl mx-auto border rounded-sm">
-      {loggedInUser ? <MessagesMainContainer /> : <Login />}
+    <div className="w-full max-h-100vh h-100vh mx-auto">
+      {loading ? (
+        <div className="w-full h-full grid place-items-center">
+          <CircularLoading size="3.5rem" thickness={4} />
+        </div>
+      ) : loggedInUser ? (
+        <ChatRoomContainer />
+      ) : (
+        <Login />
+      )}
     </div>
   );
 };

@@ -1,8 +1,10 @@
-import { signInWithGooglePopup } from "@/lib/firebase";
+import { db, signInWithGooglePopup } from "@/lib/firebase";
 import { Button } from "../ui/button";
 import { useAppDispatch } from "@/redux/app/hooks";
-import { signIn } from "@/redux/features/user/userSlice";
+import { logIn } from "@/redux/features/user/userSlice";
 import { writeToLocalStorage } from "@/lib/storageHelper";
+import LoginImg from "../../assets/images/login_img.svg";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const googleIcon = () => (
   <svg
@@ -44,25 +46,53 @@ const Login = () => {
         accessToken: await user?.getIdToken(),
         refreshToken: user?.refreshToken,
       };
-      dispatch(signIn(userObj));
+      dispatch(logIn(userObj));
       writeToLocalStorage("user", userObj);
+
+      try {
+        const userRef = doc(db, "users", user?.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) return;
+
+        await setDoc(doc(db, "users", user?.uid), {
+          displayName: user?.displayName,
+          email: user?.email,
+          photoUrl: user?.photoURL,
+          id: user?.uid,
+          blocked: [],
+        });
+
+        await setDoc(doc(db, "chats", user?.uid), {
+          chats: [],
+        });
+      } catch (err) {
+        console.log("error", err);
+      }
     } catch (ex) {
       console.log(ex);
     }
   };
 
   return (
-    <div className="w-full h-full grid place-items-center">
-      <div className="text-center">
-        <h4 className="text-2xl font-semibold">Please login to continue</h4>
-        <Button
-          variant={"secondary"}
-          className="text-lg border border-gray-200 mt-4"
-          onClick={handleLoginWithGoogle}
-        >
-          Login with Google
-          {googleIcon()}
-        </Button>
+    <div className="w-full h-screen flex">
+      <div className="w-[60%] relative border">
+        <img src={LoginImg} className="w-full h-full absolute inset-0" />
+      </div>
+      <div className="h-full w-[40%] flex items-center justify-center bg-[#407BFF99]">
+        <div className="text-center">
+          <h4 className="text-2xl font-semibold text-white">
+            Please login to continue
+          </h4>
+          <Button
+            variant={"secondary"}
+            className="text-lg border border-gray-200 mt-4 text-[#407BFF]"
+            onClick={handleLoginWithGoogle}
+          >
+            Login with Google
+            {googleIcon()}
+          </Button>
+        </div>
       </div>
     </div>
   );

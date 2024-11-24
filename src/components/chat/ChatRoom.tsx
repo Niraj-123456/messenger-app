@@ -1,7 +1,7 @@
 import CircularLoading from "@/components/common/circular-loading/CircularLoading";
-import SendMessageContainer from "./SendMessageContainer";
+import MessageSendInput from "./MessageSendInput";
 import SenderInfo from "./SenderInfo";
-import MessagesMain from "./MessagesMain";
+import ChatMessages from "./ChatMessages";
 
 const Messages = ({ loading }: { loading: boolean }) => {
   if (loading) {
@@ -15,8 +15,8 @@ const Messages = ({ loading }: { loading: boolean }) => {
   return (
     <div className="w-full h-full flex flex-col divide-y">
       <SenderInfo />
-      <MessagesMain />
-      <SendMessageContainer />
+      <ChatMessages />
+      <MessageSendInput />
     </div>
   );
 };
