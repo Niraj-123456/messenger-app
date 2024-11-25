@@ -2,8 +2,31 @@ import CircularLoading from "@/components/common/circular-loading/CircularLoadin
 import MessageSendInput from "./MessageSendInput";
 import SenderInfo from "./SenderInfo";
 import ChatMessages from "./ChatMessages";
+import { useEffect, useState } from "react";
+import { useAppDispatch } from "@/redux/app/hooks";
+import { getDocs } from "firebase/firestore";
 
-const Messages = ({ loading }: { loading: boolean }) => {
+const ChatRoom = () => {
+  const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(true);
+
+  // useEffect(() => {
+  //   getUsers();
+  // }, []);
+
+  // const getUsers = async () => {
+  //   try {
+  //     const usersShapShot = getDocs(doc(db, "users"))
+  //     dispatch(userList(res?.data?.data));
+  //     dispatch(storeSelectedUser(res?.data?.data[0]));
+  //     dispatch(storeMessages(res?.data?.data));
+  //     dispatch(storeMetaData(res?.data?.meta));
+  //   } catch (ex) {
+  //     // console.log("error", ex);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   if (loading) {
     return (
       <div className="flex justify-center w-full h-full p-8">
@@ -21,4 +44,4 @@ const Messages = ({ loading }: { loading: boolean }) => {
   );
 };
 
-export default Messages;
+export default ChatRoom;

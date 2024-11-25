@@ -1,5 +1,5 @@
 import Login from "../login/Login";
-import ChatRoomContainer from "../ChatRoomContainer";
+import ChatRoomContainer from "../chat/ChatRoomContainer";
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/redux/app/hooks";
 import { logIn, logOut } from "@/redux/features/user/userSlice";
@@ -16,6 +16,7 @@ const Home = () => {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userObj = {
+          id: user?.uid,
           displayName: user?.displayName,
           email: user?.email,
           photoUrl: user?.photoURL,

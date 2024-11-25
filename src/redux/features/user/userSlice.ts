@@ -1,7 +1,18 @@
 import { RootState } from "@/redux/app/store";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState = {
+interface UserSlice {
+  user: {
+    displayName: string;
+    email: string;
+    photoUrl: string;
+    accessToken: string;
+    refreshToken: string;
+    id: string;
+  } | null;
+}
+
+const initialState: UserSlice = {
   user: null,
 };
 
@@ -20,5 +31,5 @@ export const userSlice = createSlice({
 });
 
 export const { logIn, logOut } = userSlice.actions;
-export const selectUser = (state: RootState) => state.user.user;
+export const selectLoggedInUser = (state: RootState) => state.user.user;
 export default userSlice.reducer;

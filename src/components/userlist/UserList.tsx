@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import UserImage from "../../assets/images/random.jpg";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
 import { stringToColor } from "@/lib/stringHelper";
@@ -17,12 +16,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { logOut } from "@/redux/features/user/userSlice";
+import { auth, db } from "@/lib/firebase";
+import { logOut, selectLoggedInUser } from "@/redux/features/user/userSlice";
+import { FormEvent, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
+  arrayUnion,
+  collection,
+  doc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import CustomAvatar from "../common/CustomAvatar";
 
-const UserList = ({ loading }: { loading: boolean }) => {
+const UserList = () => {
   const dispatch = useAppDispatch();
   const users = useAppSelector(selectUsers);
+  const loggedInUser = useAppSelector(selectLoggedInUser);
+  const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [userSearchList, setUserSearchList] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
 
   const handleSignout = async () => {
     try {
@@ -31,18 +55,83 @@ const UserList = ({ loading }: { loading: boolean }) => {
     } catch (ex) {}
   };
 
+  const handleSearchUser = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSearching(true);
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const username = formData.get("username");
+    if (username === "") return;
+    const userRef = collection(db, "users");
+    const q = query(userRef, where("displayName", "==", username));
+    try {
+      const querySnapShot = await getDocs(q);
+      if (!querySnapShot.empty) {
+        const result = [] as any[];
+        querySnapShot.forEach((doc) => {
+          result.push(doc.data());
+        });
+        setUserSearchList(result);
+      }
+    } catch (ex) {
+      console.log("error", ex);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleAddUser = async (user: any) => {
+    const chatRef = collection(db, "chats");
+    const userChatsRef = collection(db, "userchats");
+    try {
+      const newChatRef = doc(chatRef);
+
+      await setDoc(newChatRef, {
+        createdAt: serverTimestamp(),
+        messages: [],
+      });
+
+      await updateDoc(doc(userChatsRef, user?.id), {
+        chats: arrayUnion({
+          chatId: newChatRef.id,
+          lastMessage: "",
+          receiverId: loggedInUser?.id,
+          updatedAt: Date.now(),
+        }),
+      });
+
+      await updateDoc(doc(userChatsRef, loggedInUser?.id), {
+        chats: arrayUnion({
+          chatId: newChatRef.id,
+          lastMessage: "",
+          receiverId: user?.id,
+          updatedAt: Date.now(),
+        }),
+      });
+    } catch (ex) {
+      console.log("error", ex);
+    }
+  };
+
+  const handleOpenUserAddDialog = () => {
+    setUserSearchList([]);
+    setOpen((prev) => !prev);
+  };
+
   return (
     <div className="w-full flex flex-col divide-y-2 max-w-sm *:p-4">
       <div className="flex flex-col gap-8">
         <div className="flex justify-between">
           <div className="flex gap-2 items-center">
             <Avatar className="w-14 h-14">
-              <AvatarImage src={UserImage} />
+              <AvatarImage src={loggedInUser?.photoUrl} />
               <AvatarFallback>J</AvatarFallback>
             </Avatar>
             <div className="mt-2">
-              <p className="text-lg font-semibold">John Doe</p>
-              <p className="text-sm text-gray-500">@john_doe</p>
+              <p className="text-lg font-semibold">
+                {loggedInUser?.displayName}
+              </p>
+              <p className="text-sm text-gray-500">{loggedInUser?.email}</p>
             </div>
           </div>
 
@@ -71,7 +160,7 @@ const UserList = ({ loading }: { loading: boolean }) => {
             <Search className="w-5 h-5 absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
           </div>
 
-          <Button>
+          <Button onClick={handleOpenUserAddDialog}>
             <Plus />
           </Button>
         </div>
@@ -155,6 +244,61 @@ const UserList = ({ loading }: { loading: boolean }) => {
           </Tabs>
         </div>
       </div>
+
+      <Dialog open={open} onOpenChange={handleOpenUserAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Search User</DialogTitle>
+            <DialogDescription></DialogDescription>
+          </DialogHeader>
+
+          <div className="w-full">
+            <form onSubmit={handleSearchUser}>
+              <div className="flex gap-2">
+                <Input name="username" />
+                <Button>Search</Button>
+              </div>
+            </form>
+
+            {searching ? (
+              <div className="flex gap-2 mt-4">
+                <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
+                <div className="flex flex-col justify-center gap-3 w-full">
+                  <Skeleton className="w-[40%] h-2" />
+                  <Skeleton className="w-[20%] h-2" />
+                </div>
+              </div>
+            ) : (
+              userSearchList?.length > 0 && (
+                <div className="flex flex-col gap-4 mt-4">
+                  {userSearchList?.map((user) => (
+                    <div
+                      key={user?.id}
+                      className="flex justify-between items-center"
+                    >
+                      <div className="flex gap-3 items-center">
+                        <CustomAvatar
+                          src={user?.photoUrl}
+                          name={user?.displayName}
+                          className="w-8 h-8"
+                        />
+                        <div>{user?.displayName}</div>
+                      </div>
+                      <Button
+                        size={"sm"}
+                        className="h-8"
+                        onClick={() => handleAddUser(user)}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

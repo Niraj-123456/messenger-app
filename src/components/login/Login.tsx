@@ -40,6 +40,7 @@ const Login = () => {
     try {
       const { user } = await signInWithGooglePopup();
       const userObj = {
+        id: user?.uid,
         displayName: user?.displayName,
         email: user?.email,
         photoUrl: user?.photoURL,
@@ -63,7 +64,7 @@ const Login = () => {
           blocked: [],
         });
 
-        await setDoc(doc(db, "chats", user?.uid), {
+        await setDoc(doc(db, "userchats", user?.uid), {
           chats: [],
         });
       } catch (err) {
