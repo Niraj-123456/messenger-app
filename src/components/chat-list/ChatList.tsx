@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
 import { stringToColor } from "@/lib/stringHelper";
 import { cn } from "@/lib/utils";
-import { selectUsers } from "@/redux/features/users/usersSlice";
 import { Skeleton } from "@/components/ui/skeleton";
 import FriendList from "./FriendList";
 import { LogOut, MoreHorizontal, Plus, Search } from "lucide-react";
@@ -18,7 +17,7 @@ import {
 import { signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { logOut, selectLoggedInUser } from "@/redux/features/user/userSlice";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +29,9 @@ import {
   arrayUnion,
   collection,
   doc,
+  getDoc,
   getDocs,
+  onSnapshot,
   query,
   serverTimestamp,
   setDoc,
@@ -38,21 +39,28 @@ import {
   where,
 } from "firebase/firestore";
 import CustomAvatar from "../common/CustomAvatar";
+import {
+  storeChats,
+  storeSelectedChat,
+} from "@/redux/features/chats/chatsSlice";
 
-const UserList = () => {
+const ChatList = () => {
   const dispatch = useAppDispatch();
-  const users = useAppSelector(selectUsers);
   const loggedInUser = useAppSelector(selectLoggedInUser);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [userSearchList, setUserSearchList] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [chatList, setChatList] = useState<any>([]);
 
   const handleSignout = async () => {
     try {
       await signOut(auth);
       dispatch(logOut());
-    } catch (ex) {}
+    } catch (ex) {
+      console.log("error", ex);
+    }
   };
 
   const handleSearchUser = async (e: FormEvent<HTMLFormElement>) => {
@@ -81,6 +89,7 @@ const UserList = () => {
   };
 
   const handleAddUser = async (user: any) => {
+    setAdding(true);
     const chatRef = collection(db, "chats");
     const userChatsRef = collection(db, "userchats");
     try {
@@ -110,6 +119,8 @@ const UserList = () => {
       });
     } catch (ex) {
       console.log("error", ex);
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -117,6 +128,33 @@ const UserList = () => {
     setUserSearchList([]);
     setOpen((prev) => !prev);
   };
+
+  useEffect(() => {
+    const unSub = onSnapshot(
+      doc(db, "userchats", loggedInUser?.id as string),
+      async (res) => {
+        const chats = res.data()?.chats;
+        const promises = chats?.map(async (chat: any) => {
+          const userDocRef = doc(db, "users", chat?.receiverId);
+          const userDocSnap = await getDoc(userDocRef);
+
+          const user = userDocSnap.data();
+
+          return { ...chat, user };
+        });
+        const chatData = await Promise.all(promises);
+        const sortedChatData = chatData.sort(
+          (a, b) => b?.updatedAt - a?.updatedAt
+        );
+        setLoading(false);
+        setChatList(sortedChatData);
+        dispatch(storeChats(sortedChatData));
+        dispatch(storeSelectedChat(sortedChatData[0]));
+      }
+    );
+
+    return () => unSub();
+  }, [loggedInUser?.id]);
 
   return (
     <div className="w-full flex flex-col divide-y-2 max-w-sm *:p-4">
@@ -127,7 +165,7 @@ const UserList = () => {
               <AvatarImage src={loggedInUser?.photoUrl} />
               <AvatarFallback>J</AvatarFallback>
             </Avatar>
-            <div className="mt-2">
+            <div>
               <p className="text-lg font-semibold">
                 {loggedInUser?.displayName}
               </p>
@@ -174,21 +212,22 @@ const UserList = () => {
             "custom_scroll"
           )}
         >
-          {users?.map((user) => (
-            <div key={user?.id} className="flex-shrink-0">
+          {chatList?.map((chat: any) => (
+            <div key={chat?.chatId} className="flex-shrink-0">
               <div className="w-14 h-14 relative">
                 <Avatar className="w-full h-full">
-                  <AvatarImage src="" />
+                  <AvatarImage src={chat?.user?.photoUrl} />
                   <AvatarFallback
                     style={{
-                      backgroundColor: stringToColor(user?.name) + "4D",
-                      color: stringToColor(user?.name),
+                      backgroundColor:
+                        stringToColor(chat?.user?.displayName) + "4D",
+                      color: stringToColor(chat?.user?.displayName),
                     }}
                   >
-                    {user?.name?.substring(0, 1)}
+                    {chat?.user?.displayName?.substring(0, 1)}
                   </AvatarFallback>
                 </Avatar>
-                {user?.status === "active" && (
+                {chat?.user?.status === "active" && (
                   <>
                     <div className="border border-green-600 w-2 h-2 rounded-full absolute bottom-2 right-0 animate-ping" />
                     <div className=" w-2 h-2 bg-green-600 rounded-full absolute bottom-2 right-0" />
@@ -197,7 +236,7 @@ const UserList = () => {
               </div>
 
               <div className="pt-1 font-semibold text-xs text-center text-gray-500 max-w-24 overflow-hidden text-ellipsis">
-                {user?.name.split(" ")[0]}
+                {chat?.user?.displayName?.split(" ")[0]}
               </div>
             </div>
           ))}
@@ -216,7 +255,7 @@ const UserList = () => {
             <TabsContent value="All">
               <div
                 className={cn(
-                  "flex flex-col divide-y overflow-auto max-h-[calc(100vh-26.8rem)] *:p-4",
+                  "flex flex-col divide-y overflow-auto h-full max-h-[calc(100vh-26.8rem)] *:p-4",
                   "custom_scroll"
                 )}
               >
@@ -233,8 +272,8 @@ const UserList = () => {
                     ))}
                   </>
                 ) : (
-                  users?.map((user) => (
-                    <FriendList key={user?.id} friend={user} />
+                  chatList?.map((chat: any) => (
+                    <FriendList key={chat?.chatId} chat={chat} />
                   ))
                 )}
               </div>
@@ -303,4 +342,4 @@ const UserList = () => {
   );
 };
 
-export default UserList;
+export default ChatList;

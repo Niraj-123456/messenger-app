@@ -1,19 +1,24 @@
 import CustomAvatar from "@/components/common/CustomAvatar";
 import { useAppSelector } from "@/redux/app/hooks";
-import { selectSelectedUser } from "@/redux/features/users/usersSlice";
+import { selectSelectedChat } from "@/redux/features/chats/chatsSlice";
 import { Info, Phone, Video } from "lucide-react";
 
 const SenderInfo = () => {
-  const senderInfo = useAppSelector(selectSelectedUser);
+  const chat = useAppSelector(selectSelectedChat);
+  const user = chat?.user;
   return (
     <div className="w-full flex gap-4 items-center px-4 py-3">
       <div className="relative w-full">
         <div className="flex gap-2 items-center">
-          <CustomAvatar src="" name={senderInfo?.name} className="w-14 h-14" />
+          <CustomAvatar
+            src={user?.photoUrl}
+            name={user?.displayName}
+            className="w-14 h-14"
+          />
           <div>
-            <p className="text-lg font-semibold">{senderInfo?.name}</p>
+            <p className="text-lg font-semibold">{user?.displayName}</p>
             <p className="text-xs text-gray-500 pl-1">
-              {senderInfo?.status === "active" ? "Active now" : "Offline"}
+              {user?.status === "active" ? "Active now" : "Offline"}
             </p>
           </div>
         </div>

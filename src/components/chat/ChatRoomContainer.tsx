@@ -1,13 +1,13 @@
 import ChatRoom from "./ChatRoom";
-import UserList from "../userlist/UserList";
-import SelectedFriendInfo from "../selected-friend-info/SelectedFriendInfo";
+import UserList from "../chat-list/ChatList";
+import SelectedChatInfo from "../selected-chat-info/SelectedChatInfo";
 
 const ChatRoomContainer = () => {
   return (
     <div className="w-full h-full flex divide-x">
       <UserList />
       <ChatRoom />
-      <SelectedFriendInfo />
+      <SelectedChatInfo />
     </div>
   );
 };

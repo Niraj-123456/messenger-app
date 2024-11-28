@@ -1,21 +1,23 @@
 import CustomAvatar from "@/components/common/CustomAvatar";
 import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@/redux/app/hooks";
-import { selectSelectedUser } from "@/redux/features/users/usersSlice";
+import { selectSelectedChat } from "@/redux/features/chats/chatsSlice";
 import { Ellipsis, MessageCircle, Phone, Video } from "lucide-react";
 
-const SelectedFriendInfo = () => {
-  const friendInfo = useAppSelector(selectSelectedUser);
+const SelectedChatInfo = () => {
+  const chat = useAppSelector(selectSelectedChat);
+  const user = chat?.user;
+
   return (
     <div className="flex flex-col w-full max-w-xs divide-y *:p-4">
       <div className="flex flex-col justify-center items-center w-full">
         <div className="w-16 h-16 relative">
           <CustomAvatar
-            src=""
-            name={friendInfo?.name}
+            src={user?.photoUrl}
+            name={user?.name}
             className="w-full h-full text-2xl"
           />
-          {friendInfo?.status === "active" && (
+          {user?.status === "active" && (
             <>
               <div className="border border-green-600 w-2.5 h-2.5 rounded-full absolute bottom-1 right-1 animate-ping" />
               <div className=" w-2.5 h-2.5 bg-green-600 rounded-full absolute bottom-1 right-1" />
@@ -23,8 +25,8 @@ const SelectedFriendInfo = () => {
           )}
         </div>
         <div className="mt-2 text-center">
-          <h4 className="font-semibold text-xl">{friendInfo?.name}</h4>
-          <p className="text-gray-500 text-xs pt1">{friendInfo?.email}</p>
+          <h4 className="font-semibold text-xl">{user?.name}</h4>
+          <p className="text-gray-500 text-xs pt1">{user?.email}</p>
         </div>
       </div>
       <div className="pt-6">
@@ -67,7 +69,7 @@ const SelectedFriendInfo = () => {
         <div>
           <div className="font-semibold">Gender</div>
           <div className="text-sm text-gray-500 capitalize">
-            {friendInfo?.gender}
+            {user?.gender ?? "-"}
           </div>
         </div>
       </div>
@@ -75,4 +77,4 @@ const SelectedFriendInfo = () => {
   );
 };
 
-export default SelectedFriendInfo;
+export default SelectedChatInfo;

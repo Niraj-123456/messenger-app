@@ -35,7 +35,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="w-full max-h-100vh h-100vh mx-auto">
+    <div className="w-full max-h-screen h-screen mx-auto">
       {loading ? (
         <div className="w-full h-full grid place-items-center">
           <CircularLoading size="3.5rem" thickness={4} />

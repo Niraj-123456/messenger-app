@@ -4,7 +4,7 @@ import logger from "redux-logger";
 import storage from "redux-persist/lib/storage";
 
 import messagesReducer from "../features/messages/messagesSlice";
-import usersReducer from "../features/users/usersSlice";
+import chatsReducer from "../features/chats/chatsSlice";
 import userReducer from "../features/user/userSlice";
 
 const persistConfig = {
@@ -14,7 +14,7 @@ const persistConfig = {
 
 const rootReducers = combineReducers({
   user: userReducer,
-  users: usersReducer,
+  chats: chatsReducer,
   messages: messagesReducer,
 });
 
