@@ -1,12 +1,47 @@
+import { useState } from "react";
 import CustomAvatar from "@/components/common/CustomAvatar";
 import { Button } from "@/components/ui/button";
-import { useAppSelector } from "@/redux/app/hooks";
-import { selectSelectedChat } from "@/redux/features/chats/chatsSlice";
+import { db } from "@/lib/firebase";
+import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
+import {
+  selectIsCurrentUserBlocked,
+  selectIsReceiverBlocked,
+  selectSelectedChat,
+  toggleBlockUser,
+} from "@/redux/features/chats/chatsSlice";
+import { selectLoggedInUser } from "@/redux/features/user/userSlice";
+import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore";
 import { Ellipsis, MessageCircle, Phone, Video } from "lucide-react";
+import CircularLoading from "../common/circular-loading/CircularLoading";
 
 const SelectedChatInfo = () => {
+  const dispatch = useAppDispatch();
+  const loggedInUser = useAppSelector(selectLoggedInUser);
+  const isReceiverBlocked = useAppSelector(selectIsReceiverBlocked);
+  const isCurrentUserBlocked = useAppSelector(selectIsCurrentUserBlocked);
   const chat = useAppSelector(selectSelectedChat);
   const user = chat?.user;
+
+  const [blockToggling, setBlockToggling] = useState(false);
+
+  const handleToggleBlockUser = async () => {
+    if (!user) return;
+    setBlockToggling(true);
+    const userDocRef = doc(db, "users", loggedInUser?.id as string);
+
+    try {
+      await updateDoc(userDocRef, {
+        blocked: isReceiverBlocked
+          ? arrayRemove(user?.id)
+          : arrayUnion(user?.id),
+      });
+      dispatch(toggleBlockUser());
+    } catch (ex) {
+      // handle error
+    } finally {
+      setBlockToggling(false);
+    }
+  };
 
   return (
     <div className="flex flex-col w-full max-w-xs divide-y *:p-4">
@@ -14,7 +49,7 @@ const SelectedChatInfo = () => {
         <div className="w-16 h-16 relative">
           <CustomAvatar
             src={user?.photoUrl}
-            name={user?.name}
+            name={user?.displayName}
             className="w-full h-full text-2xl"
           />
           {user?.status === "active" && (
@@ -25,7 +60,7 @@ const SelectedChatInfo = () => {
           )}
         </div>
         <div className="mt-2 text-center">
-          <h4 className="font-semibold text-xl">{user?.name}</h4>
+          <h4 className="font-semibold text-xl">{user?.displayName}</h4>
           <p className="text-gray-500 text-xs pt1">{user?.email}</p>
         </div>
       </div>
@@ -72,6 +107,20 @@ const SelectedChatInfo = () => {
             {user?.gender ?? "-"}
           </div>
         </div>
+      </div>
+      <div>
+        <Button
+          className="w-full"
+          disabled={blockToggling || isCurrentUserBlocked}
+          onClick={handleToggleBlockUser}
+        >
+          {isReceiverBlocked
+            ? "UnBlocked User"
+            : isCurrentUserBlocked
+            ? "You are Blocked"
+            : "Block User"}
+          {blockToggling && <CircularLoading size="1.5rem" color="#fff" />}
+        </Button>
       </div>
     </div>
   );

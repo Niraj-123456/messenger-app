@@ -16,6 +16,7 @@ const ChatRoom = () => {
   const selectedChat = useAppSelector(selectSelectedChat);
 
   useEffect(() => {
+    if (!selectedChat) return;
     const unSub = onSnapshot(
       doc(db, "chats", selectedChat?.chatId as string),
       async (res) => {
@@ -40,7 +41,7 @@ const ChatRoom = () => {
     <div className="w-full h-full flex flex-col divide-y">
       <SenderInfo />
       <ChatMessages />
-      <MessageSendInput />
+      <MessageSendInput selectedChat={selectedChat} />
     </div>
   );
 };

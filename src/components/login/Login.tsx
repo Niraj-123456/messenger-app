@@ -36,19 +36,10 @@ const googleIcon = () => (
 
 const Login = () => {
   const dispatch = useAppDispatch();
+
   const handleLoginWithGoogle = async () => {
     try {
       const { user } = await signInWithGooglePopup();
-      const userObj = {
-        id: user?.uid,
-        displayName: user?.displayName,
-        email: user?.email,
-        photoUrl: user?.photoURL,
-        accessToken: await user?.getIdToken(),
-        refreshToken: user?.refreshToken,
-      };
-      dispatch(logIn(userObj));
-      writeToLocalStorage("user", userObj);
 
       try {
         const userRef = doc(db, "users", user?.uid);
@@ -56,17 +47,25 @@ const Login = () => {
 
         if (userSnap.exists()) return;
 
-        await setDoc(doc(db, "users", user?.uid), {
+        const userObj = {
+          id: user?.uid,
           displayName: user?.displayName,
           email: user?.email,
           photoUrl: user?.photoURL,
-          id: user?.uid,
           blocked: [],
+        };
+
+        await setDoc(doc(db, "users", user?.uid), {
+          ...userObj,
         });
 
         await setDoc(doc(db, "userchats", user?.uid), {
           chats: [],
         });
+
+        dispatch(logIn(userObj));
+        writeToLocalStorage("user", userObj);
+        writeToLocalStorage("accessToken", await user?.getIdToken());
       } catch (err) {
         console.log("error", err);
       }

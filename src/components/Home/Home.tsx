@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/redux/app/hooks";
 import { logIn, logOut } from "@/redux/features/user/userSlice";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import CircularLoading from "../common/circular-loading/CircularLoading";
+import { doc, getDoc } from "firebase/firestore";
 
 const Home = () => {
   const dispatch = useAppDispatch();
@@ -13,25 +14,34 @@ const Home = () => {
   const [loggedInUser, setLoggedInUser] = useState<any | null>(null);
 
   useEffect(() => {
-    onAuthStateChanged(auth, async (user) => {
+    const unSub = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const userObj = {
-          id: user?.uid,
-          displayName: user?.displayName,
-          email: user?.email,
-          photoUrl: user?.photoURL,
-          accessToken: await user?.getIdToken(),
-          refreshToken: user?.refreshToken,
-        };
-        setLoading(false);
-        setLoggedInUser(userObj);
-        dispatch(logIn(userObj));
+        try {
+          const userDocRef = doc(db, "users", user?.uid);
+          const userShapshot = await getDoc(userDocRef);
+          if (userShapshot.exists()) {
+            const user = userShapshot.data();
+            setLoading(false);
+            setLoggedInUser(user);
+            dispatch(logIn(user));
+          } else {
+            setLoading(false);
+            setLoggedInUser(null);
+            dispatch(logOut());
+          }
+        } catch (ex) {
+          setLoading(false);
+          setLoggedInUser(null);
+          dispatch(logOut());
+        }
       } else {
         setLoading(false);
         setLoggedInUser(null);
         dispatch(logOut());
       }
     });
+
+    return () => unSub();
   }, []);
 
   return (

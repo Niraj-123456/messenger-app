@@ -41,8 +41,9 @@ import {
 import CustomAvatar from "../common/CustomAvatar";
 import {
   storeChats,
-  storeSelectedChat,
+  storeSelectedChat
 } from "@/redux/features/chats/chatsSlice";
+import CircularLoading from "../common/circular-loading/CircularLoading";
 
 const ChatList = () => {
   const dispatch = useAppDispatch();
@@ -130,6 +131,7 @@ const ChatList = () => {
   };
 
   useEffect(() => {
+    if (!loggedInUser) return;
     const unSub = onSnapshot(
       doc(db, "userchats", loggedInUser?.id as string),
       async (res) => {
@@ -149,7 +151,13 @@ const ChatList = () => {
         setLoading(false);
         setChatList(sortedChatData);
         dispatch(storeChats(sortedChatData));
-        dispatch(storeSelectedChat(sortedChatData[0]));
+        dispatch(
+          storeSelectedChat({
+            chat: sortedChatData[0],
+            currentUser: loggedInUser,
+            user: sortedChatData[0]?.user,
+          })
+        );
       }
     );
 
@@ -161,10 +169,12 @@ const ChatList = () => {
       <div className="flex flex-col gap-8">
         <div className="flex justify-between">
           <div className="flex gap-2 items-center">
-            <Avatar className="w-14 h-14">
-              <AvatarImage src={loggedInUser?.photoUrl} />
-              <AvatarFallback>J</AvatarFallback>
-            </Avatar>
+            <CustomAvatar
+              src={loggedInUser?.photoUrl!}
+              name={loggedInUser?.displayName!}
+              className="w-14 h-14"
+            />
+
             <div>
               <p className="text-lg font-semibold">
                 {loggedInUser?.displayName}
@@ -327,8 +337,10 @@ const ChatList = () => {
                         size={"sm"}
                         className="h-8"
                         onClick={() => handleAddUser(user)}
+                        disabled={adding}
                       >
                         Add
+                        {adding && <CircularLoading color="#fff" />}
                       </Button>
                     </div>
                   ))}
