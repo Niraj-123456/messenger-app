@@ -29,7 +29,7 @@ const ChatMessages = () => {
   const selectedChat = useAppSelector(selectSelectedChat);
   const blocked = useAppSelector(selectBlocked);
   const sortedMessages = [...messages]?.sort(
-    (a, b) => b?.createdAt - a?.createdAt
+    (a, b) => a?.createdAt - b?.createdAt
   );
 
   const isReceiverBlocked = blocked?.includes(selectedChat?.user?.id);
@@ -37,42 +37,41 @@ const ChatMessages = () => {
     loggedInUser?.id
   );
 
+  // useEffect(() => {
+  //   const messagesContainer = messagesContainerRef?.current;
+  //   if (!messagesContainer) return;
+
+  //   if (fetchingMoreMessages) return;
+  //   const handleScrollTop = () => {
+  //     const { scrollTop } = messagesContainer;
+
+  //     if (scrollTop <= 0) {
+  //       dispatch(fetchPaginatedMessages(currentPage));
+  //     }
+  //   };
+
+  //   messagesContainer?.addEventListener("scroll", handleScrollTop);
+
+  //   return () => {
+  //     messagesContainer?.removeEventListener("scroll", handleScrollTop);
+  //   };
+  // }, [
+  //   messagesContainerRef?.current,
+  //   dispatch,
+  //   currentPage,
+  //   fetchingMoreMessages,
+  // ]);
+
   useEffect(() => {
-    const messagesContainer = messagesContainerRef?.current;
-    if (!messagesContainer) return;
+    const lastestMessageElement = document.getElementById("#latestMessage");
+    if (!lastestMessageElement) return;
 
-    if (fetchingMoreMessages) return;
-    const handleScrollTop = () => {
-      const { scrollTop } = messagesContainer;
+    console.log("latest message", lastestMessageElement);
 
-      if (scrollTop <= 0) {
-        dispatch(fetchPaginatedMessages(currentPage));
-      }
-    };
-
-    messagesContainer?.addEventListener("scroll", handleScrollTop);
-
-    return () => {
-      messagesContainer?.removeEventListener("scroll", handleScrollTop);
-    };
-  }, [
-    messagesContainerRef?.current,
-    dispatch,
-    currentPage,
-    fetchingMoreMessages,
-  ]);
-
-  useEffect(() => {
-    const latestMessageInTheBatch = document.querySelector(
-      "#latestMessageInTheBatch"
-    );
-
-    if (!latestMessageInTheBatch) return;
-
-    latestMessageInTheBatch.scrollIntoView({
+    lastestMessageElement?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [sortedMessages]);
+  }, [messages]);
 
   return (
     <div
@@ -81,13 +80,13 @@ const ChatMessages = () => {
     >
       <div
         className={cn(
-          "w-full h-[calc(100vh-140px)] max-h-[calc(100vh-140px)] flex flex-col-reverse justify-end gap-8 px-6 py-4",
+          "w-full min-h-[calc(100vh-140px)] flex flex-col gap-8 px-4 pt-4 pb-6",
           "custom_scroll"
         )}
       >
         {sortedMessages?.length > 0 ? (
           sortedMessages?.map((message, idx) => {
-            const isLatestMessageInTheBlock = messages?.length - 10 === idx;
+            const isLatestMessage = messages?.length - 1 === idx;
             return (
               <div
                 key={idx}
@@ -97,11 +96,7 @@ const ChatMessages = () => {
                     ? "self-end"
                     : "self-start"
                 )}
-                id={`${
-                  isLatestMessageInTheBlock
-                    ? "latestMessageInTheBatch"
-                    : "message"
-                }`}
+                id={`${isLatestMessage ? "latestMessage" : "message"}`}
               >
                 <CustomAvatar
                   src={
@@ -115,40 +110,55 @@ const ChatMessages = () => {
                     "w-[2rem] h-[2rem]"
                   )}
                 />
+
                 <div
                   className={cn(
-                    "relative border py-1 px-3 bg-gray-200 w-max rounded-2xl max-w-80 text-base",
+                    "flex flex-col gap-1",
                     loggedInUser?.id === message?.senderId
-                      ? "bg-gray-200"
-                      : "bg-gray-50",
-                    isCurrentUserBlocked ? "blur-sm" : ""
+                      ? "items-end"
+                      : "items-start"
                   )}
                 >
-                  {message?.text}
+                  {message?.imageUrl && (
+                    <div className="w-48 h-auto rounded-md overflow-hidden">
+                      <img src={message?.imageUrl} className="w-full h-full" />
+                    </div>
+                  )}
                   <div
                     className={cn(
-                      "absolute text-xs text-gray-400 pt-1 whitespace-nowrap",
+                      "relative border py-1 px-3 bg-gray-200 w-max rounded-2xl max-w-80 text-base",
                       loggedInUser?.id === message?.senderId
-                        ? "right-0"
-                        : "left-0"
+                        ? "bg-gray-200"
+                        : "bg-gray-50",
+                      isCurrentUserBlocked ? "blur-sm" : ""
                     )}
                   >
-                    {getRelativeTime(message?.createdAt)}
+                    {message?.text}
+                    <div
+                      className={cn(
+                        "absolute text-xs text-gray-400 pt-1 whitespace-nowrap",
+                        loggedInUser?.id === message?.senderId
+                          ? "right-0"
+                          : "left-0"
+                      )}
+                    >
+                      {getRelativeTime(message?.createdAt)}
+                    </div>
                   </div>
                 </div>
               </div>
             );
           })
         ) : isCurrentUserBlocked ? (
-          <div className="w-full h-full grid place-items-center">
+          <div className="w-full h-[calc(100vh-175px)] grid place-items-center">
             You are blocked
           </div>
         ) : isReceiverBlocked ? (
-          <div className="w-full h-full grid place-items-center">
+          <div className="w-full h-[calc(100vh-175px)] grid place-items-center">
             You have blocked this user
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col justify-center items-center">
+          <div className="w-full h-[calc(100vh-175px)] flex flex-col justify-center items-center">
             <div className="w-full h-[32rem] max-h-[32rem] relative">
               <img
                 src={NoChatMessages}

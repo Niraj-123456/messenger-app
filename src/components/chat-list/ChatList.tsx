@@ -149,7 +149,6 @@ const ChatList = () => {
         const sortedChatData = chatData.sort(
           (a, b) => b?.updatedAt - a?.updatedAt
         );
-        console.log("sorted chat data", sortedChatData);
         setLoading(false);
         setChatList(sortedChatData);
         dispatch(storeChats(sortedChatData));

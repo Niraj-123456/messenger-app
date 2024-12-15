@@ -10,10 +10,14 @@ import Emoji from "../../assets/images/smiling-emoji.svg";
 import { selectLoggedInUser } from "@/redux/features/user/userSlice";
 import { db } from "@/lib/firebase";
 import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
-import { selectBlocked } from "@/redux/features/chats/chatsSlice";
+import {
+  selectBlocked,
+  selectSelectedChat,
+} from "@/redux/features/chats/chatsSlice";
 import { cn } from "@/lib/utils";
 import useClickOutside from "@/hooks/useClickOutside";
-import { firebaseUpload } from "@/lib/upload";
+import { cloudinaryImageUpload } from "@/lib/upload";
+import CircularLoading from "../common/circular-loading/CircularLoading";
 
 export interface Emoji {
   activeSkinTone: string;
@@ -25,17 +29,15 @@ export interface Emoji {
   unifiedWithoutSkinTone: string;
 }
 
-export interface MessageSendInputProps {
-  selectedChat: any;
-}
-
-const MessageSendInput = ({ selectedChat }: MessageSendInputProps) => {
+const MessageSendInput = () => {
   const dispatch = useAppDispatch();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const selectedChat = useAppSelector(selectSelectedChat);
   const loggedInUser = useAppSelector(selectLoggedInUser);
   const blocked = useAppSelector(selectBlocked);
   const [message, setMessage] = useState("");
   const [openEmoji, setOpenEmoji] = useState(false);
+  const [sending, setSending] = useState(false);
   const [upload, setUpload] = useState<{
     file: File | null;
     url: ArrayBuffer | string | null;
@@ -63,24 +65,23 @@ const MessageSendInput = ({ selectedChat }: MessageSendInputProps) => {
   };
 
   const handleSendMessage = async () => {
-    // if (message === "") return;
-    let imgUrl = null;
-
-    const messageObj = {
-      senderId: loggedInUser?.id,
-      text: message,
-      createdAt: Date.now(),
-      ...(imgUrl ? { imageUrl: imgUrl } : {}),
-    };
-
-    console.log("image url", imgUrl);
+    if (message === "" && !upload.file) return;
+    setSending(true);
+    let imgUrl: any = null;
 
     const userIds = [loggedInUser?.id, selectedChat?.user?.id];
 
     try {
       if (upload.file) {
-        imgUrl = await firebaseUpload(upload.file);
+        imgUrl = await cloudinaryImageUpload(upload.file);
       }
+
+      const messageObj = {
+        senderId: loggedInUser?.id,
+        text: message,
+        createdAt: Date.now(),
+        ...(imgUrl ? { imageUrl: imgUrl?.url } : {}),
+      };
 
       await updateDoc(doc(db, "chats", selectedChat?.chatId), {
         messages: arrayUnion({ ...messageObj }),
@@ -106,11 +107,19 @@ const MessageSendInput = ({ selectedChat }: MessageSendInputProps) => {
           });
         }
       });
-      dispatch(addNewMessage(messageObj));
+
+      // dispatch(addNewMessage(messageObj));
     } catch (ex) {
       console.log("error", ex);
+    } finally {
+      setSending(false);
+      setMessage("");
+      setUpload({
+        file: null,
+        url: "",
+      });
+      imgUrl = null;
     }
-    setMessage("");
   };
 
   const handleEnterKeyPressed = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -205,10 +214,14 @@ const MessageSendInput = ({ selectedChat }: MessageSendInputProps) => {
 
         <Button
           onClick={handleSendMessage}
-          disabled={isCurrentUserBlocked || isReceiverBlocked}
+          disabled={isCurrentUserBlocked || isReceiverBlocked || sending}
         >
           Send
-          <SendHorizonal />
+          {sending ? (
+            <CircularLoading size="1rem" color="#fff" />
+          ) : (
+            <SendHorizonal />
+          )}
         </Button>
       </div>
       {upload?.url && (

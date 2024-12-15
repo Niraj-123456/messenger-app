@@ -7,4 +7,9 @@ export const config = {
   firebaseMessagingSenderId: import.meta.env.VITE_FIREBASE_MESSENGER_SENDER_ID,
   firebaseAppId: import.meta.env.VITE_FIREBASE_APP_ID,
   firebaseMeasurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  cloudinaryCloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+  cloudinaryApiKey: import.meta.env.VITE_CLOUDINARY_API_KEY,
+  cloudinaryApiSecret: import.meta.env.VITE_CLOUDINARY_API_SECRET,
+  cloudinaryUploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+  cloudinaryUploadBaseUrl: import.meta.env.VITE_CLOUDINARY_UPLOAD_BASE_URL,
 };
