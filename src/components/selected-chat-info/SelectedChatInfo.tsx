@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebase";
 import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
 import {
-  selectIsCurrentUserBlocked,
-  selectIsReceiverBlocked,
+  selectBlocked,
   selectSelectedChat,
   toggleBlockUser,
 } from "@/redux/features/chats/chatsSlice";
@@ -17,12 +16,15 @@ import CircularLoading from "../common/circular-loading/CircularLoading";
 const SelectedChatInfo = () => {
   const dispatch = useAppDispatch();
   const loggedInUser = useAppSelector(selectLoggedInUser);
-  const isReceiverBlocked = useAppSelector(selectIsReceiverBlocked);
-  const isCurrentUserBlocked = useAppSelector(selectIsCurrentUserBlocked);
+  const blocked = useAppSelector(selectBlocked);
+
   const chat = useAppSelector(selectSelectedChat);
   const user = chat?.user;
 
   const [blockToggling, setBlockToggling] = useState(false);
+
+  const isReceiverBlocked = blocked?.includes(user?.id);
+  const isCurrentUserBlocked = user?.blocked?.includes(loggedInUser?.id);
 
   const handleToggleBlockUser = async () => {
     if (!user) return;
@@ -31,11 +33,11 @@ const SelectedChatInfo = () => {
 
     try {
       await updateDoc(userDocRef, {
-        blocked: isReceiverBlocked
+        blocked: blocked?.includes(user?.id)
           ? arrayRemove(user?.id)
           : arrayUnion(user?.id),
       });
-      dispatch(toggleBlockUser());
+      dispatch(toggleBlockUser(user?.id));
     } catch (ex) {
       // handle error
     } finally {
@@ -48,7 +50,7 @@ const SelectedChatInfo = () => {
       <div className="flex flex-col justify-center items-center w-full">
         <div className="w-16 h-16 relative">
           <CustomAvatar
-            src={user?.photoUrl}
+            src={!isCurrentUserBlocked ? user?.photoUrl : ""}
             name={user?.displayName}
             className="w-full h-full text-2xl"
           />
@@ -60,8 +62,12 @@ const SelectedChatInfo = () => {
           )}
         </div>
         <div className="mt-2 text-center">
-          <h4 className="font-semibold text-xl">{user?.displayName}</h4>
-          <p className="text-gray-500 text-xs pt1">{user?.email}</p>
+          <h4 className="font-semibold text-xl">
+            {isCurrentUserBlocked ? "User" : user?.displayName}
+          </h4>
+          <p className="text-gray-500 text-xs pt1">
+            {isCurrentUserBlocked ? "-" : user?.email}
+          </p>
         </div>
       </div>
       <div className="pt-6">

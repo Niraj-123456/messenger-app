@@ -1,22 +1,21 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from "@/lib/firebase";
-import { stringToColor } from "@/lib/stringHelper";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/redux/app/hooks";
 import {
-  selectIsCurrentUserBlocked,
   selectSelectedChat,
   storeSelectedChat,
 } from "@/redux/features/chats/chatsSlice";
 import { selectLoggedInUser } from "@/redux/features/user/userSlice";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import CustomAvatar from "../common/CustomAvatar";
 
 const FriendList = ({ chat }: { chat: any }) => {
   const user = chat?.user;
   const dispatch = useAppDispatch();
   const loggedInUser = useAppSelector(selectLoggedInUser);
   const selectedChat = useAppSelector(selectSelectedChat);
-  const isCurrentUserBlocked = useAppSelector(selectIsCurrentUserBlocked);
+
+  const isCurrentUserBlocked = user?.blocked?.includes(loggedInUser?.id);
 
   const handleChangeSelectedUser = async (chat: any) => {
     try {
@@ -38,12 +37,8 @@ const FriendList = ({ chat }: { chat: any }) => {
       }
       dispatch(
         storeSelectedChat({
-          chat: {
-            ...chat,
-            isSeen: true,
-          },
-          currentUser: loggedInUser,
-          user: chat?.user,
+          ...chat,
+          isSeen: true,
         })
       );
     } catch (ex) {
@@ -53,7 +48,7 @@ const FriendList = ({ chat }: { chat: any }) => {
   };
 
   const generateBgColor = () => {
-    if (selectedChat?.isSeen) {
+    if (chat?.isSeen) {
       if (selectedChat?.chatId === chat?.chatId) {
         return "bg-gray-200 hover:bg-gray-100";
       } else {
@@ -72,17 +67,11 @@ const FriendList = ({ chat }: { chat: any }) => {
       )}
       onClick={() => handleChangeSelectedUser(chat)}
     >
-      <Avatar className="w-14 h-14">
-        <AvatarImage src={isCurrentUserBlocked ? "" : user?.photoUrl} />
-        <AvatarFallback
-          style={{
-            backgroundColor: stringToColor(user?.displayName) + "4D",
-            color: stringToColor(user?.displayName),
-          }}
-        >
-          {user?.displayName.substring(0, 1)}
-        </AvatarFallback>
-      </Avatar>
+      <CustomAvatar
+        src={isCurrentUserBlocked ? "" : user?.photoUrl}
+        name={user?.displayName}
+        className="w-14 h-14"
+      />
       <div>
         <p className="font-semibold">
           {isCurrentUserBlocked ? "User" : user?.displayName}

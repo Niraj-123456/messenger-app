@@ -16,7 +16,11 @@ const ChatRoom = () => {
   const selectedChat = useAppSelector(selectSelectedChat);
 
   useEffect(() => {
-    if (!selectedChat) return;
+    if (!selectedChat) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     const unSub = onSnapshot(
       doc(db, "chats", selectedChat?.chatId as string),
       async (res) => {

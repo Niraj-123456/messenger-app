@@ -1,15 +1,16 @@
 import CustomAvatar from "@/components/common/CustomAvatar";
 import { useAppSelector } from "@/redux/app/hooks";
-import {
-  selectIsCurrentUserBlocked,
-  selectSelectedChat,
-} from "@/redux/features/chats/chatsSlice";
+import { selectSelectedChat } from "@/redux/features/chats/chatsSlice";
+import { selectLoggedInUser } from "@/redux/features/user/userSlice";
 import { Phone, Video } from "lucide-react";
 
 const SenderInfo = () => {
+  const loggedInUser = useAppSelector(selectLoggedInUser);
   const chat = useAppSelector(selectSelectedChat);
-  const isCurrentUserBlocked = useAppSelector(selectIsCurrentUserBlocked);
   const user = chat?.user;
+
+  const isCurrentUserBlocked = chat?.user?.blocked?.includes(loggedInUser?.id);
+
   return (
     <div className="w-full flex gap-4 items-center px-4 py-3">
       <div className="relative w-full">

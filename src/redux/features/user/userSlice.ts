@@ -6,8 +6,7 @@ interface UserSlice {
     displayName: string;
     email: string;
     photoUrl: string;
-    accessToken: string;
-    refreshToken: string;
+    blocked: string[];
     id: string;
   } | null;
 }

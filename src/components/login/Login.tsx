@@ -76,10 +76,10 @@ const Login = () => {
 
   return (
     <div className="w-full h-screen flex">
-      <div className="w-[60%] relative border">
+      <div className="w-full relative border">
         <img src={LoginImg} className="w-full h-full absolute inset-0" />
       </div>
-      <div className="h-full w-[40%] flex items-center justify-center bg-[#407BFF99]">
+      <div className="h-full w-full flex items-center justify-center bg-[#407BFF99]">
         <div className="text-center">
           <h4 className="text-2xl font-semibold text-white">
             Please login to continue

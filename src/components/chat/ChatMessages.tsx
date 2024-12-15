@@ -13,8 +13,7 @@ import NoChatMessages from "../../assets/images/start_chat.svg";
 import { selectLoggedInUser } from "@/redux/features/user/userSlice";
 import { getRelativeTime } from "@/lib/date-time";
 import {
-  selectIsCurrentUserBlocked,
-  selectIsReceiverBlocked,
+  selectBlocked,
   selectSelectedChat,
 } from "@/redux/features/chats/chatsSlice";
 
@@ -28,10 +27,14 @@ const ChatMessages = () => {
   const messages = useAppSelector(selectMessages);
   const loggedInUser = useAppSelector(selectLoggedInUser);
   const selectedChat = useAppSelector(selectSelectedChat);
-  const isCurrentUserBlocked = useAppSelector(selectIsCurrentUserBlocked);
-  const isReceiverBlocked = useAppSelector(selectIsReceiverBlocked);
+  const blocked = useAppSelector(selectBlocked);
   const sortedMessages = [...messages]?.sort(
     (a, b) => b?.createdAt - a?.createdAt
+  );
+
+  const isReceiverBlocked = blocked?.includes(selectedChat?.user?.id);
+  const isCurrentUserBlocked = selectedChat?.user?.blocked?.includes(
+    loggedInUser?.id
   );
 
   useEffect(() => {
@@ -124,7 +127,7 @@ const ChatMessages = () => {
                   {message?.text}
                   <div
                     className={cn(
-                      "absolute text-xs text-gray-400 pt-1",
+                      "absolute text-xs text-gray-400 pt-1 whitespace-nowrap",
                       loggedInUser?.id === message?.senderId
                         ? "right-0"
                         : "left-0"
@@ -136,6 +139,14 @@ const ChatMessages = () => {
               </div>
             );
           })
+        ) : isCurrentUserBlocked ? (
+          <div className="w-full h-full grid place-items-center">
+            You are blocked
+          </div>
+        ) : isReceiverBlocked ? (
+          <div className="w-full h-full grid place-items-center">
+            You have blocked this user
+          </div>
         ) : (
           <div className="w-full h-full flex flex-col justify-center items-center">
             <div className="w-full h-[32rem] max-h-[32rem] relative">

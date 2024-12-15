@@ -40,8 +40,9 @@ import {
 } from "firebase/firestore";
 import CustomAvatar from "../common/CustomAvatar";
 import {
+  storeBlocked,
   storeChats,
-  storeSelectedChat
+  storeSelectedChat,
 } from "@/redux/features/chats/chatsSlice";
 import CircularLoading from "../common/circular-loading/CircularLoading";
 
@@ -148,16 +149,12 @@ const ChatList = () => {
         const sortedChatData = chatData.sort(
           (a, b) => b?.updatedAt - a?.updatedAt
         );
+        console.log("sorted chat data", sortedChatData);
         setLoading(false);
         setChatList(sortedChatData);
         dispatch(storeChats(sortedChatData));
-        dispatch(
-          storeSelectedChat({
-            chat: sortedChatData[0],
-            currentUser: loggedInUser,
-            user: sortedChatData[0]?.user,
-          })
-        );
+        dispatch(storeBlocked(loggedInUser?.blocked));
+        dispatch(storeSelectedChat(sortedChatData[0]));
       }
     );
 
@@ -170,8 +167,8 @@ const ChatList = () => {
         <div className="flex justify-between">
           <div className="flex gap-2 items-center">
             <CustomAvatar
-              src={loggedInUser?.photoUrl!}
-              name={loggedInUser?.displayName!}
+              src={loggedInUser?.photoUrl || ""}
+              name={loggedInUser?.displayName || ""}
               className="w-14 h-14"
             />
 
